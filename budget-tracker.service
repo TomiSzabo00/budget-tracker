@@ -1,0 +1,17 @@
+[Unit]
+Description=Budget Tracker — personal budget tracker web app
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__APP_DIR__
+ExecStart=__APP_DIR__/node_modules/.bin/next start -p __PORT__
+Restart=always
+RestartSec=5
+EnvironmentFile=__APP_DIR__/.env
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
