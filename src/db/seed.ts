@@ -5,7 +5,13 @@ import { categories, sessionState } from "./schema";
 import { eq } from "drizzle-orm";
 import path from "path";
 
-const dbPath = path.join(process.cwd(), "budget-tracker.db");
+import fs from "fs";
+
+const dataDir = process.env.DATA_DIR || process.cwd();
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+const dbPath = path.join(dataDir, "budget-tracker.db");
 const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
