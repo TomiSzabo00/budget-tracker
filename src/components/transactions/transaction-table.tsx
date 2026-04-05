@@ -1,0 +1,169 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CategoryDropdown } from "./category-dropdown";
+import { ArrowUpDown } from "lucide-react";
+
+interface Transaction {
+  id: number;
+  amount: number;
+  currency: string;
+  status: string;
+  bookingDate: string;
+  debtorName: string | null;
+  creditorName: string | null;
+  reference: string | null;
+  description: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  categoryColor: string | null;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  color: string;
+}
+
+interface Props {
+  transactions: Transaction[];
+  categories: Category[];
+  selected: Set<number>;
+  onSelect: (s: Set<number>) => void;
+  onCategoryChange: (txId: number, categoryId: number, createRule: boolean) => void;
+  sortBy: string;
+  sortDir: string;
+  onSort: (column: string) => void;
+}
+
+function formatCurrency(amount: number, currency: string) {
+  return new Intl.NumberFormat("hu-HU", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export function TransactionTable({
+  transactions,
+  categories,
+  selected,
+  onSelect,
+  onCategoryChange,
+  sortBy,
+  sortDir,
+  onSort,
+}: Props) {
+  const allSelected =
+    transactions.length > 0 && transactions.every((t) => selected.has(t.id));
+
+  const toggleAll = () => {
+    if (allSelected) {
+      onSelect(new Set());
+    } else {
+      onSelect(new Set(transactions.map((t) => t.id)));
+    }
+  };
+
+  const toggle = (id: number) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelect(next);
+  };
+
+  const SortHeader = ({ column, label }: { column: string; label: string }) => (
+    <TableHead
+      className="cursor-pointer select-none"
+      onClick={() => onSort(column)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortBy === column && (
+          <ArrowUpDown className="h-3 w-3" />
+        )}
+      </div>
+    </TableHead>
+  );
+
+  return (
+    <div className="border rounded-lg overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-10">
+              <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+            </TableHead>
+            <SortHeader column="bookingDate" label="Date" />
+            <TableHead>Description</TableHead>
+            <TableHead>Counterparty</TableHead>
+            <SortHeader column="amount" label="Amount" />
+            <TableHead>Category</TableHead>
+            <SortHeader column="status" label="Status" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                No transactions found
+              </TableCell>
+            </TableRow>
+          ) : (
+            transactions.map((tx) => (
+              <TableRow key={tx.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.has(tx.id)}
+                    onCheckedChange={() => toggle(tx.id)}
+                  />
+                </TableCell>
+                <TableCell className="whitespace-nowrap">{tx.bookingDate}</TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {tx.description || tx.reference || "—"}
+                </TableCell>
+                <TableCell className="max-w-[150px] truncate">
+                  {tx.amount < 0 ? tx.creditorName : tx.debtorName || "—"}
+                </TableCell>
+                <TableCell
+                  className={`font-mono whitespace-nowrap ${
+                    tx.amount > 0 ? "text-green-600" : "text-red-500"
+                  }`}
+                >
+                  {formatCurrency(tx.amount, tx.currency)}
+                </TableCell>
+                <TableCell>
+                  <CategoryDropdown
+                    currentCategoryId={tx.categoryId}
+                    currentCategoryName={tx.categoryName}
+                    currentCategoryColor={tx.categoryColor}
+                    categories={categories}
+                    counterparty={tx.amount < 0 ? tx.creditorName : tx.debtorName}
+                    onSelect={(catId, createRule) =>
+                      onCategoryChange(tx.id, catId, createRule)
+                    }
+                  />
+                </TableCell>
+                <TableCell>
+                  <Badge variant={tx.status === "booked" ? "default" : "secondary"}>
+                    {tx.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
