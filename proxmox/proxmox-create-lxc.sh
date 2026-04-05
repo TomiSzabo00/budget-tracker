@@ -21,8 +21,8 @@ CT_CIDR="24"
 CT_DNS="192.168.1.1 8.8.8.8"
 CT_STORAGE="local-lvm"           # storage pool
 CT_DISK_GB=4
-CT_RAM_MB=512
-CT_SWAP_MB=256
+CT_RAM_MB=1024
+CT_SWAP_MB=512
 CT_CORES=2
 CT_TEMPLATE_STORAGE="local"
 CT_OS_TEMPLATE="debian-12-standard_12.12-1_amd64.tar.zst"
@@ -133,7 +133,7 @@ set -euo pipefail
 APP_DIR="$1"
 cd "$APP_DIR"
 npm ci --production=false
-npm run build
+NODE_OPTIONS="--max-old-space-size=768" npm run build
 # Clean dev dependencies after build
 npm prune --production
 # Install tsx globally for seed script
