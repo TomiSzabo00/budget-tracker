@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       const mFrom = `${yearStr}-${String(m).padStart(2, "0")}-01`;
       const mTo = getLastDayOfMonth(year, m);
       const monthTxs = txs.filter(
-        (t) => t.bookingDate >= mFrom && t.bookingDate <= mTo
+        (t) => t.bookingDate && t.bookingDate >= mFrom && t.bookingDate <= mTo
       );
       const mIncome = monthTxs.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
       const mExpenses = monthTxs

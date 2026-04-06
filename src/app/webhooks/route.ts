@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
 
 async function handleNewTransaction(data: NewTransactionData) {
   const now = new Date().toISOString();
+  const bookingDate = data.booking_date || data.value_date || null;
+  const valueDate = data.value_date || data.booking_date || null;
 
   // Get default "Uncategorized" category
   const uncategorized = db
@@ -73,8 +75,8 @@ async function handleNewTransaction(data: NewTransactionData) {
     db.update(transactions)
       .set({
         status: data.status,
-        bookingDate: data.booking_date,
-        valueDate: data.value_date,
+        bookingDate,
+        valueDate,
         debtorName: data.debtor_name,
         creditorName: data.creditor_name,
         reference: data.reference,
@@ -94,8 +96,8 @@ async function handleNewTransaction(data: NewTransactionData) {
         amount: data.amount,
         currency: data.currency,
         status: data.status,
-        bookingDate: data.booking_date,
-        valueDate: data.value_date,
+        bookingDate,
+        valueDate,
         debtorName: data.debtor_name,
         creditorName: data.creditor_name,
         reference: data.reference,

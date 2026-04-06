@@ -15,8 +15,8 @@ export interface NewTransactionData {
   amount: number;
   currency: string;
   status: string;
-  booking_date: string;
-  value_date: string;
+  booking_date: string | null;
+  value_date: string | null;
   debtor_name: string | null;
   creditor_name: string | null;
   reference: string | null;
