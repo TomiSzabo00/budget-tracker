@@ -126,6 +126,16 @@ rm -f "$TMPTAR"
 
 pct exec "${CT_ID}" -- bash -c "tar -xzf /tmp/budget-tracker.tar.gz -C ${APP_DIR} && rm /tmp/budget-tracker.tar.gz"
 
+# ── 5b. Write .env with correct paths ───────────────────────────────────────
+echo "==> Writing .env configuration..."
+pct exec "${CT_ID}" -- bash -c "cat > ${APP_DIR}/.env" <<EOF
+# Budget Tracker Configuration
+# Edit WEBHOOK_SECRET to match your banking-sync service config.
+WEBHOOK_SECRET=change-me-to-a-real-secret
+DATA_DIR=${APP_DIR}/data
+PORT=${APP_PORT}
+EOF
+
 # ── 6. Build the application ────────────────────────────────────────────────
 echo "==> Installing dependencies and building..."
 pct exec "${CT_ID}" -- bash -s -- "${APP_DIR}" <<'INNER'
