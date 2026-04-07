@@ -24,54 +24,59 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
+function formatMonthLabel(ym: string) {
+  const [y, m] = ym.split("-");
+  return `${MONTH_NAMES[Number(m) - 1]} ${y}`;
+}
+
 export default function DashboardPage() {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string>("");
   const [data, setData] = useState<SummaryData | null>(null);
 
+  // Fetch available months on mount
   useEffect(() => {
-    fetch(`/api/summary?year=${year}&month=${month}`)
+    fetch("/api/transactions/months")
+      .then((r) => r.json())
+      .then((months: string[]) => {
+        setAvailableMonths(months);
+        if (months.length > 0 && !selected) {
+          setSelected(months[0]); // most recent
+        }
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch summary when selection changes
+  useEffect(() => {
+    if (!selected) return;
+    const [y, m] = selected.split("-");
+    fetch(`/api/summary?year=${y}&month=${Number(m)}`)
       .then((r) => r.json())
       .then(setData);
-  }, [year, month]);
+  }, [selected]);
 
-  const goToPrev = () => {
-    if (month === 1) { setMonth(12); setYear(year - 1); }
-    else setMonth(month - 1);
-  };
-
-  const goToNext = () => {
-    if (month === 12) { setMonth(1); setYear(year + 1); }
-    else setMonth(month + 1);
-  };
-
-  const label = `${MONTH_NAMES[month - 1]} ${year}`;
+  const label = selected ? formatMonthLabel(selected) : "";
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={goToPrev}
-            className="px-2 py-1 rounded text-sm text-muted-foreground hover:bg-accent transition-colors"
+        {availableMonths.length > 0 && (
+          <select
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            className="text-sm font-medium border rounded-md px-3 py-1.5 bg-background text-foreground cursor-pointer hover:bg-accent transition-colors"
           >
-            ←
-          </button>
-          <span className="text-sm font-medium min-w-[140px] text-center">{label}</span>
-          <button
-            onClick={goToNext}
-            className="px-2 py-1 rounded text-sm text-muted-foreground hover:bg-accent transition-colors"
-          >
-            →
-          </button>
-        </div>
+            {availableMonths.map((ym) => (
+              <option key={ym} value={ym}>{formatMonthLabel(ym)}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       <AuthStatusBanner />
 
-      {data && (
+      {data && selected ? (
         <>
           <MonthSummaryCard
             income={data.income}
@@ -95,6 +100,10 @@ export default function DashboardPage() {
 
           <TaxSummary data={data.taxSummary} currency={data.currency} />
         </>
+      ) : (
+        !data && availableMonths.length === 0 && (
+          <p className="text-muted-foreground">No transactions yet</p>
+        )
       )}
 
       <YearlySummary />
