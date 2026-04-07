@@ -8,6 +8,7 @@ interface Props {
   spent: number;
   saved: number;
   currency: string;
+  label: string;
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -18,14 +19,12 @@ function formatCurrency(amount: number, currency: string) {
   }).format(amount);
 }
 
-export function MonthSummaryCard({ income, spent, saved, currency }: Props) {
-  const month = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
-
+export function MonthSummaryCard({ income, spent, saved, currency, label }: Props) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
-          {month}
+          {label}
         </CardTitle>
       </CardHeader>
       <CardContent>
