@@ -40,6 +40,7 @@ function formatCurrency(amount: number, currency: string) {
 export function YearlySummary() {
   const [data, setData] = useState<YearlyData | null>(null);
   const [open, setOpen] = useState(false);
+  const [showInvestment, setShowInvestment] = useState(true);
   const year = new Date().getFullYear();
 
   useEffect(() => {
@@ -49,6 +50,10 @@ export function YearlySummary() {
   }, [year]);
 
   if (!data) return null;
+
+  const filteredBreakdown = data.categoryBreakdown.filter(
+    (c) => showInvestment || c.categoryName !== "Investment"
+  );
 
   return (
     <div className="space-y-4">
@@ -136,14 +141,25 @@ export function YearlySummary() {
           </Card>
 
           {/* Yearly category breakdown + tax */}
+          <div className="flex justify-end">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showInvestment}
+                onChange={(e) => setShowInvestment(e.target.checked)}
+                className="rounded border-muted"
+              />
+              Show investments in charts
+            </label>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CategorySpendingList
-              data={data.categoryBreakdown}
+              data={filteredBreakdown}
               currency={data.currency}
               title={`Spending by Category — ${year}`}
             />
             <CategoryDonutChart
-              data={data.categoryBreakdown}
+              data={filteredBreakdown}
               currency={data.currency}
               title={`Category Breakdown — ${year}`}
             />

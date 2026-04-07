@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [data, setData] = useState<SummaryData | null>(null);
+  const [showInvestment, setShowInvestment] = useState(true);
 
   // Fetch available months on mount
   useEffect(() => {
@@ -56,6 +57,9 @@ export default function DashboardPage() {
   }, [selected]);
 
   const label = selected ? formatMonthLabel(selected) : "";
+  const filteredBreakdown = data?.categoryBreakdown.filter(
+    (c) => showInvestment || c.categoryName !== "Investment"
+  ) ?? [];
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -87,13 +91,25 @@ export default function DashboardPage() {
             label={label}
           />
 
+          <div className="flex justify-end">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showInvestment}
+                onChange={(e) => setShowInvestment(e.target.checked)}
+                className="rounded border-muted"
+              />
+              Show investments in charts
+            </label>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CategorySpendingList
-              data={data.categoryBreakdown}
+              data={filteredBreakdown}
               currency={data.currency}
             />
             <CategoryDonutChart
-              data={data.categoryBreakdown}
+              data={filteredBreakdown}
               currency={data.currency}
             />
           </div>
