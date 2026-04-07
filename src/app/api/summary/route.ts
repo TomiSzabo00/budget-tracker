@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   const spent = txs
     .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1) && t.categoryId !== investmentId)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  const saved = income - spent - invested;
+  const saved = income - spent;
 
   // Category breakdown (expenses only, non-excluded)
   const categoryBreakdown = allCategories
