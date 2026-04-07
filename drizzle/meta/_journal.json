@@ -15,6 +15,13 @@
       "when": 1775484533788,
       "tag": "0001_windy_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1744034558000,
+      "tag": "0002_raw_payload",
+      "breakpoints": true
     }
   ]
 }

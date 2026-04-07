@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
       isSalary: transactions.isSalary,
       categoryId: transactions.categoryId,
       categoryOverride: transactions.categoryOverride,
+      rawPayload: transactions.rawPayload,
       createdAt: transactions.createdAt,
       updatedAt: transactions.updatedAt,
       categoryName: categories.name,

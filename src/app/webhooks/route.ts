@@ -96,7 +96,7 @@ async function handleNewTransaction(data: NewTransactionData) {
     .get();
 
   if (existing) {
-    // Update but preserve category override
+    // Update but preserve category override and raw payload
     db.update(transactions)
       .set({
         status,
@@ -130,6 +130,7 @@ async function handleNewTransaction(data: NewTransactionData) {
         isSalary: data.is_salary,
         categoryId,
         categoryOverride: false,
+        rawPayload: JSON.stringify(data),
         createdAt: now,
         updatedAt: now,
       })

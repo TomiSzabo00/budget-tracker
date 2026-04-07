@@ -26,6 +26,7 @@ export const transactions = sqliteTable("transactions", {
   isSalary: integer("is_salary", { mode: "boolean" }).notNull().default(false),
   categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
   categoryOverride: integer("category_override", { mode: "boolean" }).notNull().default(false),
+  rawPayload: text("raw_payload"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });

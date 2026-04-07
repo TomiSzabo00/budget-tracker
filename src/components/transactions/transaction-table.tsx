@@ -12,10 +12,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CategoryDropdown } from "./category-dropdown";
-import { ArrowUpDown } from "lucide-react";
+import { RawJsonDialog } from "./raw-json-dialog";
+import { ArrowUpDown, Code2 } from "lucide-react";
 
 interface Transaction {
   id: number;
+  txHash: string;
   amount: number;
   currency: string;
   status: string;
@@ -27,6 +29,7 @@ interface Transaction {
   categoryId: number | null;
   categoryName: string | null;
   categoryColor: string | null;
+  rawPayload: string | null;
 }
 
 interface Category {
@@ -67,6 +70,8 @@ export function TransactionTable({
   const allSelected =
     transactions.length > 0 && transactions.every((t) => selected.has(t.id));
 
+  const [rawJson, setRawJson] = useState<{ txHash: string; payload: string } | null>(null);
+
   const toggleAll = () => {
     if (allSelected) {
       onSelect(new Set());
@@ -97,6 +102,7 @@ export function TransactionTable({
   );
 
   return (
+    <>
     <div className="border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
@@ -110,12 +116,13 @@ export function TransactionTable({
             <SortHeader column="amount" label="Amount" />
             <TableHead>Category</TableHead>
             <SortHeader column="status" label="Status" />
+            <TableHead className="w-8" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                 No transactions found
               </TableCell>
             </TableRow>
@@ -159,11 +166,32 @@ export function TransactionTable({
                     {tx.status}
                   </Badge>
                 </TableCell>
+                <TableCell className="w-8">
+                  {tx.rawPayload && (
+                    <button
+                      onClick={() => setRawJson({ txHash: tx.txHash, payload: tx.rawPayload! })}
+                      className="p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors rounded"
+                      title="View raw JSON"
+                    >
+                      <Code2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </TableCell>
               </TableRow>
             ))
           )}
         </TableBody>
       </Table>
     </div>
+
+    {rawJson && (
+      <RawJsonDialog
+        open={true}
+        onClose={() => setRawJson(null)}
+        txHash={rawJson.txHash}
+        rawPayload={rawJson.payload}
+      />
+    )}
+  </>
   );
 }

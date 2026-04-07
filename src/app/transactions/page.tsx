@@ -26,6 +26,7 @@ interface Transaction {
   categoryName: string | null;
   categoryColor: string | null;
   categoryOverride: boolean;
+  rawPayload: string | null;
 }
 
 interface Filters {
