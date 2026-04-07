@@ -47,6 +47,36 @@ async function handleNewTransaction(data: NewTransactionData) {
   const bookingDate = data.booking_date || data.value_date || null;
   const valueDate = data.value_date || data.booking_date || null;
 
+  // Normalize schema: support both new nested and old flat structures
+  const rawAmount = data.transaction_amount?.amount ?? data.amount ?? 0;
+  const currency = data.transaction_amount?.currency ?? data.currency ?? "HUF";
+  const bankId = data.transaction_id ?? data.bank_id ?? null;
+  const debtorName = data.debtor?.name ?? data.debtor_name ?? null;
+  const creditorName = data.creditor?.name ?? data.creditor_name ?? null;
+  const reference =
+    data.remittance_information?.[0] ??
+    data.entry_reference ??
+    data.reference ??
+    null;
+  const description = reference ?? data.description ?? null;
+
+  // Normalize status: "BOOK" → "booked", "PDNG" → "pending"
+  const status =
+    data.status === "BOOK" ? "booked" :
+    data.status === "PDNG" ? "pending" :
+    data.status;
+
+  // Determine sign: debtor present = incoming (positive), creditor present = outgoing (negative)
+  // If already signed (old schema), preserve the sign
+  let amount: number;
+  if (data.amount !== undefined) {
+    // Old schema already has correct sign
+    amount = data.amount;
+  } else {
+    // New schema: positive amount, determine direction from debtor/creditor
+    amount = debtorName ? rawAmount : -rawAmount;
+  }
+
   // Get default "Uncategorized" category
   const uncategorized = db
     .select()
@@ -55,12 +85,7 @@ async function handleNewTransaction(data: NewTransactionData) {
     .get();
 
   // Check for auto-categorization rule
-  const matchedCategoryId = findMatchingRule(
-    data.creditor_name,
-    data.debtor_name,
-    data.amount
-  );
-
+  const matchedCategoryId = findMatchingRule(creditorName, debtorName, amount);
   const categoryId = matchedCategoryId ?? uncategorized?.id ?? null;
 
   // Upsert: insert or update on tx_hash conflict
@@ -74,13 +99,13 @@ async function handleNewTransaction(data: NewTransactionData) {
     // Update but preserve category override
     db.update(transactions)
       .set({
-        status: data.status,
+        status,
         bookingDate,
         valueDate,
-        debtorName: data.debtor_name,
-        creditorName: data.creditor_name,
-        reference: data.reference,
-        description: data.description,
+        debtorName,
+        creditorName,
+        reference,
+        description,
         updatedAt: now,
         // Only update category if no manual override
         ...(existing.categoryOverride ? {} : { categoryId }),
@@ -91,17 +116,17 @@ async function handleNewTransaction(data: NewTransactionData) {
     db.insert(transactions)
       .values({
         txHash: data.tx_hash,
-        bankId: data.bank_id,
+        bankId,
         accountUid: data.account_uid,
-        amount: data.amount,
-        currency: data.currency,
-        status: data.status,
+        amount,
+        currency,
+        status,
         bookingDate,
         valueDate,
-        debtorName: data.debtor_name,
-        creditorName: data.creditor_name,
-        reference: data.reference,
-        description: data.description,
+        debtorName,
+        creditorName,
+        reference,
+        description,
         isSalary: data.is_salary,
         categoryId,
         categoryOverride: false,

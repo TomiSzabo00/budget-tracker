@@ -10,17 +10,27 @@ export interface WebhookPayload {
 
 export interface NewTransactionData {
   tx_hash: string;
-  bank_id: string;
+  transaction_id?: string | null;
+  bank_id?: string | null;
   account_uid: string;
-  amount: number;
-  currency: string;
+  // New schema: nested amount object
+  transaction_amount?: { amount: number; currency: string };
+  // Old schema flat fields (kept for backwards compat)
+  amount?: number;
+  currency?: string;
   status: string;
   booking_date: string | null;
   value_date: string | null;
-  debtor_name: string | null;
-  creditor_name: string | null;
-  reference: string | null;
-  description: string | null;
+  // New schema: nested objects
+  debtor?: { name?: string | null } | null;
+  creditor?: { name?: string | null } | null;
+  // Old schema flat fields (kept for backwards compat)
+  debtor_name?: string | null;
+  creditor_name?: string | null;
+  entry_reference?: string | null;
+  reference?: string | null;
+  remittance_information?: string[] | null;
+  description?: string | null;
   is_salary: boolean;
 }
 
