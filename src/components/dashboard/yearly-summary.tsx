@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { CategoryDonutChart } from "./category-donut-chart";
+import { CategorySpendingList } from "./category-spending-list";
 import { TaxSummary } from "./tax-summary";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ interface YearlyData {
   income: number;
   spent: number;
   saved: number;
+  invested: number;
   currency: string;
   monthlyData: { month: string; income: number; expenses: number }[];
   categoryBreakdown: CategoryBreakdown[];
@@ -62,7 +64,7 @@ export function YearlySummary() {
       {open && (
         <div className="space-y-6">
           {/* Yearly totals */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground">Total Income</p>
@@ -76,6 +78,14 @@ export function YearlySummary() {
                 <p className="text-xs text-muted-foreground">Total Expenses</p>
                 <p className="text-2xl font-bold text-red-500">
                   {formatCurrency(data.spent, data.currency)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-muted-foreground">Total Invested</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {formatCurrency(data.invested, data.currency)}
                 </p>
               </CardContent>
             </Card>
@@ -127,13 +137,19 @@ export function YearlySummary() {
 
           {/* Yearly category breakdown + tax */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CategorySpendingList
+              data={data.categoryBreakdown}
+              currency={data.currency}
+              title={`Spending by Category — ${year}`}
+            />
             <CategoryDonutChart
               data={data.categoryBreakdown}
               currency={data.currency}
               title={`Category Breakdown — ${year}`}
             />
-            <TaxSummary data={data.taxSummary} currency={data.currency} />
           </div>
+
+          <TaxSummary data={data.taxSummary} currency={data.currency} />
         </div>
       )}
     </div>

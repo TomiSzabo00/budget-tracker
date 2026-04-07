@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
   const allCategories = db.select().from(categories).all();
   const excludedIds = allCategories.filter((c) => c.excludeFromBudget).map((c) => c.id);
   const taxCategory = allCategories.find((c) => c.name === "Tax");
+  const investmentCategory = allCategories.find((c) => c.name === "Investment");
+  const investmentId = investmentCategory?.id ?? -1;
 
   // Get transactions in range
   const txs = db
@@ -28,12 +30,15 @@ export async function GET(request: NextRequest) {
     .where(and(gte(transactions.bookingDate, dateFrom), lte(transactions.bookingDate, dateTo)))
     .all();
 
-  // Monthly summary
+  // Monthly summary — exclude both budget-excluded AND Investment from "spent"
   const income = txs.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-  const spent = txs
-    .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1))
+  const invested = txs
+    .filter((t) => t.amount < 0 && t.categoryId === investmentId)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  const saved = income - spent;
+  const spent = txs
+    .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1) && t.categoryId !== investmentId)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const saved = income - spent - invested;
 
   // Category breakdown (expenses only, non-excluded)
   const categoryBreakdown = allCategories
@@ -85,7 +90,7 @@ export async function GET(request: NextRequest) {
       );
       const mIncome = monthTxs.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
       const mExpenses = monthTxs
-        .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1))
+        .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1) && t.categoryId !== investmentId)
         .reduce((s, t) => s + Math.abs(t.amount), 0);
 
       monthlyData.push({
@@ -106,8 +111,9 @@ export async function GET(request: NextRequest) {
     income: Math.round(income),
     spent: Math.round(spent),
     saved: Math.round(saved),
+    invested: Math.round(invested),
     currency,
-    categoryBreakdown,
+    categoryBreakdown: categoryBreakdown.sort((a, b) => b.total - a.total),
     taxSummary: { totalTaxPaid: Math.round(totalTaxPaid), totalIncome: Math.round(totalYearIncome), taxRate },
     monthlyData,
   });

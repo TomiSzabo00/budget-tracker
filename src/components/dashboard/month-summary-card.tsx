@@ -1,12 +1,13 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import { TrendingUp, TrendingDown, PiggyBank, Landmark } from "lucide-react";
 
 interface Props {
   income: number;
   spent: number;
   saved: number;
+  invested: number;
   currency: string;
   label: string;
 }
@@ -19,7 +20,7 @@ function formatCurrency(amount: number, currency: string) {
   }).format(amount);
 }
 
-export function MonthSummaryCard({ income, spent, saved, currency, label }: Props) {
+export function MonthSummaryCard({ income, spent, saved, invested, currency, label }: Props) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -28,7 +29,7 @@ export function MonthSummaryCard({ income, spent, saved, currency, label }: Prop
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <TrendingUp className="h-3 w-3 text-green-600" />
@@ -45,6 +46,15 @@ export function MonthSummaryCard({ income, spent, saved, currency, label }: Prop
             </div>
             <p className="text-xl font-bold text-red-500">
               {formatCurrency(spent, currency)}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Landmark className="h-3 w-3 text-purple-600" />
+              Invested
+            </div>
+            <p className="text-xl font-bold text-purple-600">
+              {formatCurrency(invested, currency)}
             </p>
           </div>
           <div className="space-y-1">

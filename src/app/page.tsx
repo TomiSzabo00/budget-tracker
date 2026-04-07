@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AuthStatusBanner } from "@/components/dashboard/auth-status-banner";
 import { MonthSummaryCard } from "@/components/dashboard/month-summary-card";
 import { CategoryDonutChart } from "@/components/dashboard/category-donut-chart";
+import { CategorySpendingList } from "@/components/dashboard/category-spending-list";
 import { TaxSummary } from "@/components/dashboard/tax-summary";
 import { YearlySummary } from "@/components/dashboard/yearly-summary";
 import type { CategoryBreakdown, TaxSummary as TaxSummaryType } from "@/types";
@@ -12,6 +13,7 @@ interface SummaryData {
   income: number;
   spent: number;
   saved: number;
+  invested: number;
   currency: string;
   categoryBreakdown: CategoryBreakdown[];
   taxSummary: TaxSummaryType;
@@ -75,17 +77,23 @@ export default function DashboardPage() {
             income={data.income}
             spent={data.spent}
             saved={data.saved}
+            invested={data.invested}
             currency={data.currency}
             label={label}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CategorySpendingList
+              data={data.categoryBreakdown}
+              currency={data.currency}
+            />
             <CategoryDonutChart
               data={data.categoryBreakdown}
               currency={data.currency}
             />
-            <TaxSummary data={data.taxSummary} currency={data.currency} />
           </div>
+
+          <TaxSummary data={data.taxSummary} currency={data.currency} />
         </>
       )}
 
