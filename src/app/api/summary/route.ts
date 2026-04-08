@@ -22,21 +22,24 @@ export async function GET(request: NextRequest) {
   const investmentId = investmentCategory?.id ?? -1;
 
   // Get transactions in range using effective month
-  const txs = targetMonth
+  const allTxs = targetMonth
     ? db.select().from(transactions).where(sql`${effectiveMonth} = ${targetMonth}`).all()
     : db.select().from(transactions).where(sql`${effectiveMonth} >= ${yearStr + '-01'} AND ${effectiveMonth} <= ${yearStr + '-12'}`).all();
 
-  // Monthly summary — exclude both budget-excluded AND Investment from "spent"
+  // Filter out excluded categories entirely — treat them as if they don't exist
+  const txs = allTxs.filter((t) => !excludedIds.includes(t.categoryId ?? -1));
+
+  // Monthly summary — Investment is separate from spent
   const income = txs.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
   const invested = txs
     .filter((t) => t.amount < 0 && t.categoryId === investmentId)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
   const spent = txs
-    .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1) && t.categoryId !== investmentId)
+    .filter((t) => t.amount < 0 && t.categoryId !== investmentId)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
   const saved = income - spent;
 
-  // Category breakdown (expenses only, non-excluded)
+  // Category breakdown (expenses only — txs already excludes budget-excluded categories)
   const categoryBreakdown = allCategories
     .filter((c) => !c.excludeFromBudget)
     .map((cat) => {
@@ -59,9 +62,10 @@ export async function GET(request: NextRequest) {
   }
 
   // Tax summary (always yearly)
-  const yearTxs = targetMonth
+  const allYearTxs = targetMonth
     ? db.select().from(transactions).where(sql`${effectiveMonth} >= ${yearStr + '-01'} AND ${effectiveMonth} <= ${yearStr + '-12'}`).all()
-    : txs;
+    : allTxs;
+  const yearTxs = allYearTxs.filter((t) => !excludedIds.includes(t.categoryId ?? -1));
 
   const totalTaxPaid = taxCategory
     ? yearTxs
@@ -82,7 +86,7 @@ export async function GET(request: NextRequest) {
       });
       const mIncome = monthTxs.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
       const mExpenses = monthTxs
-        .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1) && t.categoryId !== investmentId)
+        .filter((t) => t.amount < 0 && t.categoryId !== investmentId)
         .reduce((s, t) => s + Math.abs(t.amount), 0);
 
       monthlyData.push({

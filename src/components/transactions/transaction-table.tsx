@@ -21,6 +21,7 @@ interface Transaction {
   currency: string;
   status: string;
   bookingDate: string;
+  belongsToMonth: string | null;
   debtorName: string | null;
   creditorName: string | null;
   reference: string | null;
@@ -133,7 +134,16 @@ export function TransactionTable({
                     onCheckedChange={() => toggle(tx.id)}
                   />
                 </TableCell>
-                <TableCell className="whitespace-nowrap">{tx.bookingDate}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {tx.belongsToMonth ? (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground line-through">{tx.bookingDate}</span>
+                      <span>{tx.belongsToMonth}</span>
+                    </div>
+                  ) : (
+                    tx.bookingDate
+                  )}
+                </TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {tx.description || tx.reference || "—"}
                 </TableCell>

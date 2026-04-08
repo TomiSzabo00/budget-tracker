@@ -19,6 +19,7 @@ interface Transaction {
   currency: string;
   status: string;
   bookingDate: string;
+  belongsToMonth: string | null;
   debtorName: string | null;
   creditorName: string | null;
   reference: string | null;
