@@ -19,6 +19,7 @@ export const transactions = sqliteTable("transactions", {
   status: text("status").notNull().default("booked"),
   bookingDate: text("booking_date"),
   valueDate: text("value_date"),
+  belongsToMonth: text("belongs_to_month"), // override for summaries, format "YYYY-MM"
   debtorName: text("debtor_name"),
   creditorName: text("creditor_name"),
   reference: text("reference"),

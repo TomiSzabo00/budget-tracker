@@ -61,6 +61,17 @@ export default function DashboardPage() {
     (c) => showInvestment || c.categoryName !== "Investment"
   ) ?? [];
 
+  // Compute date range for linking to transactions
+  function getMonthRange(ym: string): { dateFrom: string; dateTo: string } {
+    const [y, m] = ym.split("-").map(Number);
+    const dateFrom = `${y}-${String(m).padStart(2, "0")}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    const dateTo = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    return { dateFrom, dateTo };
+  }
+
+  const monthRange = selected ? getMonthRange(selected) : undefined;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -107,10 +118,14 @@ export default function DashboardPage() {
             <CategorySpendingList
               data={filteredBreakdown}
               currency={data.currency}
+              dateFrom={monthRange?.dateFrom}
+              dateTo={monthRange?.dateTo}
             />
             <CategoryDonutChart
               data={filteredBreakdown}
               currency={data.currency}
+              dateFrom={monthRange?.dateFrom}
+              dateTo={monthRange?.dateTo}
             />
           </div>
 

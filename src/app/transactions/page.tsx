@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { TransactionTable } from "@/components/transactions/transaction-table";
 import { TransactionFilters } from "@/components/transactions/filters";
 import { BulkActions } from "@/components/transactions/bulk-actions";
@@ -41,12 +42,22 @@ interface Filters {
 }
 
 export default function TransactionsPage() {
+  return (
+    <Suspense>
+      <TransactionsContent />
+    </Suspense>
+  );
+}
+
+function TransactionsContent() {
+  const searchParams = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [filtersInit, setFiltersInit] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     search: "",
     categoryId: "",
@@ -57,6 +68,17 @@ export default function TransactionsPage() {
     sortBy: "bookingDate",
     sortDir: "desc",
   });
+
+  // Initialize filters from URL params on mount
+  useEffect(() => {
+    const catId = searchParams.get("categoryId") || "";
+    const dateFrom = searchParams.get("dateFrom") || "";
+    const dateTo = searchParams.get("dateTo") || "";
+    if (catId || dateFrom || dateTo) {
+      setFilters((prev) => ({ ...prev, categoryId: catId, dateFrom, dateTo }));
+    }
+    setFiltersInit(true);
+  }, [searchParams]);
 
   const fetchTransactions = useCallback(async () => {
     const params = new URLSearchParams();
@@ -85,8 +107,8 @@ export default function TransactionsPage() {
   }, []);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    if (filtersInit) fetchTransactions();
+  }, [fetchTransactions, filtersInit]);
 
   const handleCategoryChange = async (
     txId: number,

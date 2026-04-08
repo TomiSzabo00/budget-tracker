@@ -4,15 +4,17 @@ import { transactions } from "@/db/schema";
 import { sql } from "drizzle-orm";
 
 export async function GET() {
-  // Get distinct year-month combinations that have transactions
+  // Effective month: belongsToMonth if set, otherwise first 7 chars of bookingDate
+  const effectiveMonth = sql<string>`COALESCE(${transactions.belongsToMonth}, substr(${transactions.bookingDate}, 1, 7))`;
+
   const results = db
     .select({
-      month: sql<string>`substr(${transactions.bookingDate}, 1, 7)`.as("month"),
+      month: effectiveMonth.as("month"),
     })
     .from(transactions)
     .where(sql`${transactions.bookingDate} IS NOT NULL`)
-    .groupBy(sql`substr(${transactions.bookingDate}, 1, 7)`)
-    .orderBy(sql`substr(${transactions.bookingDate}, 1, 7) DESC`)
+    .groupBy(effectiveMonth)
+    .orderBy(sql`${effectiveMonth} DESC`)
     .all();
 
   return NextResponse.json(results.map((r) => r.month).filter(Boolean));

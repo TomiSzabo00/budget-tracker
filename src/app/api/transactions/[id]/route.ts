@@ -10,7 +10,7 @@ export async function PATCH(
   const { id: idStr } = await params;
   const id = Number(idStr);
   const body = await request.json();
-  const { categoryId, createRule } = body;
+  const { categoryId, createRule, belongsToMonth } = body;
 
   const tx = db.select().from(transactions).where(eq(transactions.id, id)).get();
   if (!tx) {
@@ -19,12 +19,17 @@ export async function PATCH(
 
   const now = new Date().toISOString();
 
+  const updates: Record<string, unknown> = { updatedAt: now };
+  if (categoryId !== undefined) {
+    updates.categoryId = categoryId;
+    updates.categoryOverride = true;
+  }
+  if (belongsToMonth !== undefined) {
+    updates.belongsToMonth = belongsToMonth || null; // empty string clears it
+  }
+
   db.update(transactions)
-    .set({
-      categoryId,
-      categoryOverride: true,
-      updatedAt: now,
-    })
+    .set(updates)
     .where(eq(transactions.id, id))
     .run();
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import type { CategoryBreakdown } from "@/types";
@@ -8,6 +9,8 @@ interface Props {
   data: CategoryBreakdown[];
   currency: string;
   title?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -18,7 +21,17 @@ function formatCurrency(amount: number, currency: string) {
   }).format(amount);
 }
 
-export function CategoryDonutChart({ data, currency, title = "Expense Breakdown" }: Props) {
+export function CategoryDonutChart({ data, currency, title = "Expense Breakdown", dateFrom, dateTo }: Props) {
+  const router = useRouter();
+
+  const handleClick = (categoryId: number) => {
+    const params = new URLSearchParams();
+    params.set("categoryId", String(categoryId));
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
+    router.push(`/transactions?${params}`);
+  };
+
   if (data.length === 0) {
     return (
       <Card>
@@ -37,6 +50,7 @@ export function CategoryDonutChart({ data, currency, title = "Expense Breakdown"
     value: Math.round(d.total),
     color: d.categoryColor,
     percentage: d.percentage,
+    categoryId: d.categoryId,
   }));
 
   return (
@@ -55,6 +69,8 @@ export function CategoryDonutChart({ data, currency, title = "Expense Breakdown"
               outerRadius={100}
               paddingAngle={2}
               dataKey="value"
+              style={{ cursor: "pointer" }}
+              onClick={(_, idx) => handleClick(chartData[idx].categoryId)}
             >
               {chartData.map((entry, idx) => (
                 <Cell key={idx} fill={entry.color} />

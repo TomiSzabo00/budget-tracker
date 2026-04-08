@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
       categoryId: transactions.categoryId,
       categoryOverride: transactions.categoryOverride,
       rawPayload: transactions.rawPayload,
+      belongsToMonth: transactions.belongsToMonth,
       createdAt: transactions.createdAt,
       updatedAt: transactions.updatedAt,
       categoryName: categories.name,

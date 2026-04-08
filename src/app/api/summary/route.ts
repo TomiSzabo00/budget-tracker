@@ -3,18 +3,16 @@ import { db } from "@/db";
 import { transactions, categories } from "@/db/schema";
 import { eq, and, gte, lte, lt, gt, sql } from "drizzle-orm";
 
+// Effective month: belongsToMonth if set, otherwise first 7 chars of bookingDate
+const effectiveMonth = sql<string>`COALESCE(${transactions.belongsToMonth}, substr(${transactions.bookingDate}, 1, 7))`;
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const year = Number(searchParams.get("year")) || new Date().getFullYear();
   const month = searchParams.get("month"); // optional, 1-12
 
   const yearStr = String(year);
-  const dateFrom = month
-    ? `${yearStr}-${String(month).padStart(2, "0")}-01`
-    : `${yearStr}-01-01`;
-  const dateTo = month
-    ? getLastDayOfMonth(year, Number(month))
-    : `${yearStr}-12-31`;
+  const targetMonth = month ? `${yearStr}-${String(month).padStart(2, "0")}` : null;
 
   // Get all categories
   const allCategories = db.select().from(categories).all();
@@ -23,12 +21,10 @@ export async function GET(request: NextRequest) {
   const investmentCategory = allCategories.find((c) => c.name === "Investment");
   const investmentId = investmentCategory?.id ?? -1;
 
-  // Get transactions in range
-  const txs = db
-    .select()
-    .from(transactions)
-    .where(and(gte(transactions.bookingDate, dateFrom), lte(transactions.bookingDate, dateTo)))
-    .all();
+  // Get transactions in range using effective month
+  const txs = targetMonth
+    ? db.select().from(transactions).where(sql`${effectiveMonth} = ${targetMonth}`).all()
+    : db.select().from(transactions).where(sql`${effectiveMonth} >= ${yearStr + '-01'} AND ${effectiveMonth} <= ${yearStr + '-12'}`).all();
 
   // Monthly summary — exclude both budget-excluded AND Investment from "spent"
   const income = txs.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
@@ -63,12 +59,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Tax summary (always yearly)
-  const yearTxs = month
-    ? db
-        .select()
-        .from(transactions)
-        .where(and(gte(transactions.bookingDate, `${yearStr}-01-01`), lte(transactions.bookingDate, `${yearStr}-12-31`)))
-        .all()
+  const yearTxs = targetMonth
+    ? db.select().from(transactions).where(sql`${effectiveMonth} >= ${yearStr + '-01'} AND ${effectiveMonth} <= ${yearStr + '-12'}`).all()
     : txs;
 
   const totalTaxPaid = taxCategory
@@ -81,20 +73,20 @@ export async function GET(request: NextRequest) {
 
   // Monthly data for bar chart (only when requesting yearly)
   const monthlyData = [];
-  if (!month) {
+  if (!targetMonth) {
     for (let m = 1; m <= 12; m++) {
-      const mFrom = `${yearStr}-${String(m).padStart(2, "0")}-01`;
-      const mTo = getLastDayOfMonth(year, m);
-      const monthTxs = txs.filter(
-        (t) => t.bookingDate && t.bookingDate >= mFrom && t.bookingDate <= mTo
-      );
+      const ym = `${yearStr}-${String(m).padStart(2, "0")}`;
+      const monthTxs = txs.filter((t) => {
+        const em = t.belongsToMonth || (t.bookingDate ? t.bookingDate.substring(0, 7) : null);
+        return em === ym;
+      });
       const mIncome = monthTxs.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
       const mExpenses = monthTxs
         .filter((t) => t.amount < 0 && !excludedIds.includes(t.categoryId ?? -1) && t.categoryId !== investmentId)
         .reduce((s, t) => s + Math.abs(t.amount), 0);
 
       monthlyData.push({
-        month: `${yearStr}-${String(m).padStart(2, "0")}`,
+        month: ym,
         income: Math.round(mIncome),
         expenses: Math.round(mExpenses),
       });

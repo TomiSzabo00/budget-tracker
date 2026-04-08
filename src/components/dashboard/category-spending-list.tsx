@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CategoryBreakdown } from "@/types";
 
@@ -7,6 +8,8 @@ interface Props {
   data: CategoryBreakdown[];
   currency: string;
   title?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -17,7 +20,17 @@ function formatCurrency(amount: number, currency: string) {
   }).format(amount);
 }
 
-export function CategorySpendingList({ data, currency, title = "Spending by Category" }: Props) {
+export function CategorySpendingList({ data, currency, title = "Spending by Category", dateFrom, dateTo }: Props) {
+  const router = useRouter();
+
+  const handleClick = (categoryId: number) => {
+    const params = new URLSearchParams();
+    params.set("categoryId", String(categoryId));
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
+    router.push(`/transactions?${params}`);
+  };
+
   if (data.length === 0) {
     return (
       <Card>
@@ -40,7 +53,11 @@ export function CategorySpendingList({ data, currency, title = "Spending by Cate
       </CardHeader>
       <CardContent className="space-y-3">
         {data.map((cat) => (
-          <div key={cat.categoryId} className="space-y-1">
+          <div
+            key={cat.categoryId}
+            className="space-y-1 cursor-pointer rounded -mx-2 px-2 py-1 hover:bg-muted/50 transition-colors"
+            onClick={() => handleClick(cat.categoryId)}
+          >
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <div

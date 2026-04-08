@@ -41,7 +41,21 @@ export function YearlySummary() {
   const [data, setData] = useState<YearlyData | null>(null);
   const [open, setOpen] = useState(false);
   const [showInvestment, setShowInvestment] = useState(true);
-  const year = new Date().getFullYear();
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+
+  // Fetch available years from available months
+  useEffect(() => {
+    fetch("/api/transactions/months")
+      .then((r) => r.json())
+      .then((months: string[]) => {
+        const years = [...new Set(months.map((m) => Number(m.split("-")[0])))].sort((a, b) => b - a);
+        setAvailableYears(years);
+        if (years.length > 0 && !years.includes(year)) {
+          setYear(years[0]);
+        }
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch(`/api/summary?year=${year}`)
@@ -57,14 +71,27 @@ export function YearlySummary() {
 
   return (
     <div className="space-y-4">
-      <Button
-        variant="ghost"
-        className="w-full justify-between text-left"
-        onClick={() => setOpen(!open)}
-      >
-        <span className="font-semibold">Yearly Summary — {year}</span>
-        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          className="flex-1 justify-between text-left"
+          onClick={() => setOpen(!open)}
+        >
+          <span className="font-semibold">Yearly Summary — {year}</span>
+          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+        {availableYears.length > 1 && (
+          <select
+            value={year}
+            onChange={(e) => setYear(Number(e.target.value))}
+            className="text-sm font-medium border rounded-md px-3 py-1.5 bg-background text-foreground cursor-pointer hover:bg-accent transition-colors"
+          >
+            {availableYears.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        )}
+      </div>
 
       {open && (
         <div className="space-y-6">
@@ -157,11 +184,15 @@ export function YearlySummary() {
               data={filteredBreakdown}
               currency={data.currency}
               title={`Spending by Category — ${year}`}
+              dateFrom={`${year}-01-01`}
+              dateTo={`${year}-12-31`}
             />
             <CategoryDonutChart
               data={filteredBreakdown}
               currency={data.currency}
               title={`Category Breakdown — ${year}`}
+              dateFrom={`${year}-01-01`}
+              dateTo={`${year}-12-31`}
             />
           </div>
 
