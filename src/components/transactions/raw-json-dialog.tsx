@@ -34,7 +34,7 @@ export function RawJsonDialog({ open, onClose, txHash, rawPayload }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-5xl w-fit max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-mono text-sm text-muted-foreground font-normal">
             Raw Payload

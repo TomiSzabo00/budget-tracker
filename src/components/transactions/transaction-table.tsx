@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CategoryDropdown } from "./category-dropdown";
 import { RawJsonDialog } from "./raw-json-dialog";
@@ -115,14 +114,13 @@ export function TransactionTable({
             <TableHead>Counterparty</TableHead>
             <SortHeader column="amount" label="Amount" />
             <TableHead>Category</TableHead>
-            <SortHeader column="status" label="Status" />
             <TableHead className="w-8" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                 No transactions found
               </TableCell>
             </TableRow>
@@ -160,11 +158,6 @@ export function TransactionTable({
                       onCategoryChange(tx.id, catId, createRule)
                     }
                   />
-                </TableCell>
-                <TableCell>
-                  <Badge variant={tx.status === "booked" ? "default" : "secondary"}>
-                    {tx.status}
-                  </Badge>
                 </TableCell>
                 <TableCell className="w-8">
                   {tx.rawPayload && (
