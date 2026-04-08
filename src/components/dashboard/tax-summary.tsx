@@ -1,19 +1,12 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/format";
 import type { TaxSummary as TaxSummaryType } from "@/types";
 
 interface Props {
   data: TaxSummaryType;
   currency: string;
-}
-
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("hu-HU", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 export function TaxSummary({ data, currency }: Props) {
@@ -27,13 +20,13 @@ export function TaxSummary({ data, currency }: Props) {
       <CardContent className="space-y-3">
         <div className="flex justify-between">
           <span className="text-sm text-muted-foreground">Total Tax Paid</span>
-          <span className="font-semibold text-red-500">
+          <span className="font-semibold" style={{ color: "var(--color-expense)" }}>
             {formatCurrency(data.totalTaxPaid, currency)}
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-sm text-muted-foreground">Total Income</span>
-          <span className="font-semibold text-green-600">
+          <span className="font-semibold" style={{ color: "var(--color-income)" }}>
             {formatCurrency(data.totalIncome, currency)}
           </span>
         </div>

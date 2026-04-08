@@ -3,10 +3,21 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CategoryDot } from "@/components/category-dot";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface Category {
   id: number;
   name: string;
+  color?: string;
 }
 
 interface Filters {
@@ -26,76 +37,118 @@ interface Props {
   onChange: (filters: Filters) => void;
 }
 
+const defaultFilters: Filters = {
+  search: "",
+  categoryId: "",
+  dateFrom: "",
+  dateTo: "",
+  type: "",
+  uncategorizedOnly: false,
+  sortBy: "bookingDate",
+  sortDir: "desc",
+};
+
+function hasActiveFilters(filters: Filters) {
+  return (
+    filters.search !== "" ||
+    filters.categoryId !== "" ||
+    filters.dateFrom !== "" ||
+    filters.dateTo !== "" ||
+    filters.type !== "" ||
+    filters.uncategorizedOnly
+  );
+}
+
 export function TransactionFilters({ filters, categories, onChange }: Props) {
   const update = (partial: Partial<Filters>) =>
     onChange({ ...filters, ...partial });
 
+  const clearFilters = () =>
+    onChange({ ...defaultFilters, sortBy: filters.sortBy, sortDir: filters.sortDir });
+
   return (
-    <div className="flex flex-wrap gap-3 items-end p-4 bg-muted/30 rounded-lg">
-      <div className="flex-1 min-w-[200px]">
-        <Label className="text-xs mb-1">Search</Label>
-        <Input
-          placeholder="Search transactions..."
-          value={filters.search}
-          onChange={(e) => update({ search: e.target.value })}
-        />
+    <div className="bg-card border shadow-sm rounded-lg p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <div className="lg:col-span-2">
+          <Label className="text-xs mb-1 block">Search</Label>
+          <Input
+            placeholder="Search transactions..."
+            value={filters.search}
+            onChange={(e) => update({ search: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs mb-1 block">Category</Label>
+          <Select
+            value={filters.categoryId || "__all__"}
+            onValueChange={(val) => update({ categoryId: !val || val === "__all__" ? "" : val })}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All Categories</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>
+                  {c.color && <CategoryDot color={c.color} size="sm" />}
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label className="text-xs mb-1 block">Type</Label>
+          <Select
+            value={filters.type || "__all__"}
+            onValueChange={(val) => update({ type: !val || val === "__all__" ? "" : val })}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              <SelectItem value="income">Income</SelectItem>
+              <SelectItem value="expense">Expense</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label className="text-xs mb-1 block">From</Label>
+          <Input
+            type="date"
+            value={filters.dateFrom}
+            onChange={(e) => update({ dateFrom: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs mb-1 block">To</Label>
+          <Input
+            type="date"
+            value={filters.dateTo}
+            onChange={(e) => update({ dateTo: e.target.value })}
+          />
+        </div>
       </div>
 
-      <div className="min-w-[150px]">
-        <Label className="text-xs mb-1">Category</Label>
-        <select
-          className="w-full h-9 px-3 border rounded-md text-sm bg-background"
-          value={filters.categoryId}
-          onChange={(e) => update({ categoryId: e.target.value })}
-        >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="min-w-[130px]">
-        <Label className="text-xs mb-1">Type</Label>
-        <select
-          className="w-full h-9 px-3 border rounded-md text-sm bg-background"
-          value={filters.type}
-          onChange={(e) => update({ type: e.target.value })}
-        >
-          <option value="">All</option>
-          <option value="income">Income</option>
-          <option value="expense">Expense</option>
-        </select>
-      </div>
-
-      <div>
-        <Label className="text-xs mb-1">From</Label>
-        <Input
-          type="date"
-          value={filters.dateFrom}
-          onChange={(e) => update({ dateFrom: e.target.value })}
-        />
-      </div>
-
-      <div>
-        <Label className="text-xs mb-1">To</Label>
-        <Input
-          type="date"
-          value={filters.dateTo}
-          onChange={(e) => update({ dateTo: e.target.value })}
-        />
-      </div>
-
-      <div className="flex items-center gap-2 pb-1">
-        <Switch
-          checked={filters.uncategorizedOnly}
-          onCheckedChange={(checked) =>
-            update({ uncategorizedOnly: checked })
-          }
-        />
-        <Label className="text-xs">Uncategorized only</Label>
+      <div className="flex items-center justify-between mt-3 pt-3 border-t">
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={filters.uncategorizedOnly}
+            onCheckedChange={(checked) => update({ uncategorizedOnly: checked })}
+          />
+          <Label className="text-xs cursor-pointer">Uncategorized only</Label>
+        </div>
+        {hasActiveFilters(filters) && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs gap-1">
+            <X className="h-3 w-3" />
+            Clear filters
+          </Button>
+        )}
       </div>
     </div>
   );

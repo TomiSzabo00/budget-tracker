@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Check, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -17,8 +17,6 @@ interface Props {
 }
 
 export function RawJsonDialog({ open, onClose, txHash, rawPayload }: Props) {
-  const [copied, setCopied] = useState(false);
-
   let formatted = rawPayload;
   try {
     formatted = JSON.stringify(JSON.parse(rawPayload), null, 2);
@@ -28,8 +26,7 @@ export function RawJsonDialog({ open, onClose, txHash, rawPayload }: Props) {
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(formatted);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success("Copied to clipboard");
   };
 
   return (
@@ -44,12 +41,15 @@ export function RawJsonDialog({ open, onClose, txHash, rawPayload }: Props) {
         <div className="relative flex-1 overflow-hidden">
           <button
             onClick={handleCopy}
-            className="absolute top-2 right-2 z-10 p-1.5 rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors"
+            className="absolute top-2 right-2 z-10 p-1.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
             title="Copy to clipboard"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+            <Copy className="h-3.5 w-3.5" />
           </button>
-          <pre className="bg-zinc-900 text-zinc-100 text-xs font-mono rounded p-4 overflow-auto max-h-[60vh] leading-relaxed">
+          <pre
+            className="text-xs font-mono rounded p-4 overflow-auto max-h-[60vh] leading-relaxed"
+            style={{ backgroundColor: "var(--color-code-bg)", color: "var(--color-code-fg)" }}
+          >
             {formatted}
           </pre>
         </div>

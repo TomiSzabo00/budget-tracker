@@ -7,6 +7,11 @@ import { CategoryDonutChart } from "@/components/dashboard/category-donut-chart"
 import { CategorySpendingList } from "@/components/dashboard/category-spending-list";
 import { TaxSummary } from "@/components/dashboard/tax-summary";
 import { YearlySummary } from "@/components/dashboard/yearly-summary";
+import { PageHeader } from "@/components/page-header";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/empty-state";
+import { Receipt } from "lucide-react";
 import type { CategoryBreakdown, TaxSummary as TaxSummaryType } from "@/types";
 
 interface SummaryData {
@@ -73,21 +78,32 @@ export default function DashboardPage() {
   const monthRange = selected ? getMonthRange(selected) : undefined;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        {availableMonths.length > 0 && (
-          <select
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="text-sm font-medium border rounded-md px-3 py-1.5 bg-background text-foreground cursor-pointer hover:bg-accent transition-colors"
-          >
-            {availableMonths.map((ym) => (
-              <option key={ym} value={ym}>{formatMonthLabel(ym)}</option>
-            ))}
-          </select>
-        )}
-      </div>
+    <div className="max-w-6xl mx-auto space-y-8">
+      <PageHeader title="Dashboard">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="show-investment-header"
+              checked={showInvestment}
+              onCheckedChange={setShowInvestment}
+            />
+            <Label htmlFor="show-investment-header" className="text-xs text-muted-foreground cursor-pointer whitespace-nowrap">
+              Show investments
+            </Label>
+          </div>
+          {availableMonths.length > 0 && (
+            <select
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              className="text-sm font-medium border rounded-md px-3 py-1.5 bg-background text-foreground cursor-pointer hover:bg-accent transition-colors"
+            >
+              {availableMonths.map((ym) => (
+                <option key={ym} value={ym}>{formatMonthLabel(ym)}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      </PageHeader>
 
       <AuthStatusBanner />
 
@@ -101,18 +117,6 @@ export default function DashboardPage() {
             currency={data.currency}
             label={label}
           />
-
-          <div className="flex justify-end">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showInvestment}
-                onChange={(e) => setShowInvestment(e.target.checked)}
-                className="rounded border-muted"
-              />
-              Show investments in charts
-            </label>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CategorySpendingList
@@ -133,11 +137,15 @@ export default function DashboardPage() {
         </>
       ) : (
         !data && availableMonths.length === 0 && (
-          <p className="text-muted-foreground">No transactions yet</p>
+          <EmptyState
+            icon={<Receipt />}
+            title="No transactions yet"
+            description="Connect your bank account to start tracking your budget."
+          />
         )
       )}
 
-      <YearlySummary />
+      <YearlySummary showInvestment={showInvestment} />
     </div>
   );
 }

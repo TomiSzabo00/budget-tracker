@@ -12,7 +12,15 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { CategoryDropdown } from "./category-dropdown";
 import { RawJsonDialog } from "./raw-json-dialog";
-import { ArrowUpDown, Code2 } from "lucide-react";
+import { ArrowUpDown, Code2, SearchX } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
+import { EmptyState } from "@/components/empty-state";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Transaction {
   id: number;
@@ -47,14 +55,6 @@ interface Props {
   sortBy: string;
   sortDir: string;
   onSort: (column: string) => void;
-}
-
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("hu-HU", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 export function TransactionTable({
@@ -102,6 +102,7 @@ export function TransactionTable({
   );
 
   return (
+    <TooltipProvider delay={300}>
     <>
     <div className="border rounded-lg overflow-hidden">
       <Table>
@@ -121,8 +122,12 @@ export function TransactionTable({
         <TableBody>
           {transactions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                No transactions found
+              <TableCell colSpan={7} className="py-0">
+                <EmptyState
+                  icon={<SearchX />}
+                  title="No transactions found"
+                  description="Try adjusting your filters to find what you're looking for."
+                />
               </TableCell>
             </TableRow>
           ) : (
@@ -144,16 +149,31 @@ export function TransactionTable({
                     tx.bookingDate
                   )}
                 </TableCell>
-                <TableCell className="max-w-[200px] truncate">
-                  {tx.description || tx.reference || "—"}
+                <TableCell className="max-w-[200px]">
+                  <Tooltip>
+                    <TooltipTrigger className="truncate block w-full text-left">
+                      {tx.description || tx.reference || "—"}
+                    </TooltipTrigger>
+                    {(tx.description || tx.reference) && (
+                      <TooltipContent side="bottom">{tx.description || tx.reference}</TooltipContent>
+                    )}
+                  </Tooltip>
                 </TableCell>
-                <TableCell className="max-w-[150px] truncate">
-                  {tx.amount < 0 ? tx.creditorName : tx.debtorName || "—"}
+                <TableCell className="max-w-[150px]">
+                  <Tooltip>
+                    <TooltipTrigger className="truncate block w-full text-left">
+                      {tx.amount < 0 ? tx.creditorName : tx.debtorName || "—"}
+                    </TooltipTrigger>
+                    {(tx.amount < 0 ? tx.creditorName : tx.debtorName) && (
+                      <TooltipContent side="bottom">
+                        {tx.amount < 0 ? tx.creditorName : tx.debtorName}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </TableCell>
                 <TableCell
-                  className={`font-mono whitespace-nowrap ${
-                    tx.amount > 0 ? "text-green-600" : "text-red-500"
-                  }`}
+                  className="font-mono whitespace-nowrap"
+                  style={{ color: tx.amount > 0 ? "var(--color-income)" : "var(--color-expense)" }}
                 >
                   {formatCurrency(tx.amount, tx.currency)}
                 </TableCell>
@@ -196,5 +216,6 @@ export function TransactionTable({
       />
     )}
   </>
+  </TooltipProvider>
   );
 }

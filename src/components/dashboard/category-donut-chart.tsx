@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { formatCurrency } from "@/lib/format";
 import type { CategoryBreakdown } from "@/types";
 
 interface Props {
@@ -11,14 +12,6 @@ interface Props {
   title?: string;
   dateFrom?: string;
   dateTo?: string;
-}
-
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("hu-HU", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 export function CategoryDonutChart({ data, currency, title = "Expense Breakdown", dateFrom, dateTo }: Props) {

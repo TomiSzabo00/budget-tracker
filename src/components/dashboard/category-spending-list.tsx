@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CategoryDot } from "@/components/category-dot";
+import { formatCurrency } from "@/lib/format";
 import type { CategoryBreakdown } from "@/types";
 
 interface Props {
@@ -10,14 +12,6 @@ interface Props {
   title?: string;
   dateFrom?: string;
   dateTo?: string;
-}
-
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("hu-HU", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 export function CategorySpendingList({ data, currency, title = "Spending by Category", dateFrom, dateTo }: Props) {
@@ -60,10 +54,7 @@ export function CategorySpendingList({ data, currency, title = "Spending by Cate
           >
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: cat.categoryColor }}
-                />
+                <CategoryDot color={cat.categoryColor} size="md" />
                 <span className="font-medium">{cat.categoryName}</span>
               </div>
               <div className="flex items-center gap-2 text-right">

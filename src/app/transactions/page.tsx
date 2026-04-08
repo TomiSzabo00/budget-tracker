@@ -3,7 +3,10 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { TransactionTable } from "@/components/transactions/transaction-table";
+import { PageHeader } from "@/components/page-header";
 import { TransactionFilters } from "@/components/transactions/filters";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { BulkActions } from "@/components/transactions/bulk-actions";
 
 interface Category {
@@ -125,6 +128,7 @@ function TransactionsContent() {
   };
 
   const handleBulkCategorize = async (categoryId: number) => {
+    const count = selected.size;
     await fetch("/api/transactions/bulk-categorize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -135,11 +139,12 @@ function TransactionsContent() {
     });
     setSelected(new Set());
     fetchTransactions();
+    toast.success(`Categorized ${count} transaction${count !== 1 ? "s" : ""}`);
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Transactions</h1>
+    <div className="max-w-6xl mx-auto space-y-4">
+      <PageHeader title="Transactions" description="View and categorize your bank transactions" />
 
       <TransactionFilters
         filters={filters}
@@ -177,30 +182,59 @@ function TransactionsContent() {
       />
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Showing {transactions.length} of {total} transactions
-        </span>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="px-3 py-1">
-            Page {page} of {totalPages}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            Showing {transactions.length} of {total} transactions
           </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (page <= 3) {
+                pageNum = i + 1;
+              } else if (page >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = page - 2 + i;
+              }
+              return (
+                <Button
+                  key={pageNum}
+                  variant={pageNum === page ? "default" : "outline"}
+                  size="sm"
+                  className="w-8"
+                  onClick={() => setPage(pageNum)}
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
+      {totalPages <= 1 && total > 0 && (
+        <p className="text-sm text-muted-foreground">
+          Showing all {total} transactions
+        </p>
+      )}
     </div>
   );
 }

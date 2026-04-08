@@ -16,6 +16,16 @@ import { CategorySpendingList } from "./category-spending-list";
 import { TaxSummary } from "./tax-summary";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { formatCurrency } from "@/lib/format";
 import type { CategoryBreakdown, TaxSummary as TaxSummaryType } from "@/types";
 
 interface YearlyData {
@@ -29,18 +39,13 @@ interface YearlyData {
   taxSummary: TaxSummaryType;
 }
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("hu-HU", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
+interface YearlySummaryProps {
+  showInvestment: boolean;
 }
 
-export function YearlySummary() {
+export function YearlySummary({ showInvestment }: YearlySummaryProps) {
   const [data, setData] = useState<YearlyData | null>(null);
   const [open, setOpen] = useState(false);
-  const [showInvestment, setShowInvestment] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
   const [availableYears, setAvailableYears] = useState<number[]>([]);
 
@@ -71,65 +76,68 @@ export function YearlySummary() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          className="flex-1 justify-between text-left"
-          onClick={() => setOpen(!open)}
-        >
-          <span className="font-semibold">Yearly Summary — {year}</span>
-          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
-        {availableYears.length > 1 && (
-          <select
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="text-sm font-medium border rounded-md px-3 py-1.5 bg-background text-foreground cursor-pointer hover:bg-accent transition-colors"
+      {/* Section header / collapse toggle */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 border-t border-border" />
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-sm font-medium text-muted-foreground">Yearly Summary</span>
+          {availableYears.length > 1 && (
+            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+              <SelectTrigger className="h-7 w-20 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setOpen(!open)}
           >
-            {availableYears.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        )}
+            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+        <div className="flex-1 border-t border-border" />
       </div>
 
       {open && (
         <div className="space-y-6">
-          {/* Yearly totals */}
-          <div className="grid grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-xs text-muted-foreground">Total Income</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(data.income, data.currency)}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-xs text-muted-foreground">Total Expenses</p>
-                <p className="text-2xl font-bold text-red-500">
-                  {formatCurrency(data.spent, data.currency)}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-xs text-muted-foreground">Total Invested</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(data.invested, data.currency)}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-xs text-muted-foreground">Total Saved</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(data.saved, data.currency)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Yearly totals — single card with 4-col grid */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="space-y-1 border-l-2 pl-3" style={{ borderColor: "var(--color-income)" }}>
+                  <p className="text-xs text-muted-foreground">Total Income</p>
+                  <p className="text-xl font-bold" style={{ color: "var(--color-income)" }}>
+                    {formatCurrency(data.income, data.currency)}
+                  </p>
+                </div>
+                <div className="space-y-1 border-l-2 pl-3" style={{ borderColor: "var(--color-expense)" }}>
+                  <p className="text-xs text-muted-foreground">Total Expenses</p>
+                  <p className="text-xl font-bold" style={{ color: "var(--color-expense)" }}>
+                    {formatCurrency(data.spent, data.currency)}
+                  </p>
+                </div>
+                <div className="space-y-1 border-l-2 pl-3" style={{ borderColor: "var(--color-investment)" }}>
+                  <p className="text-xs text-muted-foreground">Total Invested</p>
+                  <p className="text-xl font-bold" style={{ color: "var(--color-investment)" }}>
+                    {formatCurrency(data.invested, data.currency)}
+                  </p>
+                </div>
+                <div className="space-y-1 border-l-2 pl-3" style={{ borderColor: "var(--color-savings)" }}>
+                  <p className="text-xs text-muted-foreground">Total Saved</p>
+                  <p className="text-xl font-bold" style={{ color: "var(--color-savings)" }}>
+                    {formatCurrency(data.saved, data.currency)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Monthly bar chart */}
           <Card>
@@ -158,27 +166,22 @@ export function YearlySummary() {
                         year: "numeric",
                       });
                     }}
+                    contentStyle={{
+                      backgroundColor: "var(--popover)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-lg)",
+                      color: "var(--popover-foreground)",
+                    }}
                   />
                   <Legend />
-                  <Bar dataKey="income" name="Income" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="income" name="Income" fill="oklch(0.55 0.15 145)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" name="Expenses" fill="oklch(0.55 0.2 25)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* Yearly category breakdown + tax */}
-          <div className="flex justify-end">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showInvestment}
-                onChange={(e) => setShowInvestment(e.target.checked)}
-                className="rounded border-muted"
-              />
-              Show investments in charts
-            </label>
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CategorySpendingList
               data={filteredBreakdown}

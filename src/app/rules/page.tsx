@@ -20,7 +20,21 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CategoryDot } from "@/components/category-dot";
+import { Plus, Pencil, Trash2, RefreshCw, Settings2 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/empty-state";
+import { toast } from "sonner";
 
 interface Rule {
   id: number;
@@ -51,10 +65,13 @@ export default function RulesPage() {
   const [applyRetro, setApplyRetro] = useState(false);
   const [matchCount, setMatchCount] = useState<number | null>(null);
   const [retroResult, setRetroResult] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
+  const [loading, setLoading] = useState(true);
 
   const fetchRules = useCallback(async () => {
     const res = await fetch("/api/rules");
     setRules(await res.json());
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -124,6 +141,9 @@ export default function RulesPage() {
     const data = await res.json();
     if (data.affected > 0) {
       setRetroResult(`Applied to ${data.affected} transactions`);
+      toast.success(`Applied to ${data.affected} transactions`);
+    } else {
+      toast.success(editingRule ? "Rule updated" : "Rule created");
     }
     fetchRules();
     if (!data.affected) {
@@ -134,17 +154,17 @@ export default function RulesPage() {
   const handleDelete = async (id: number) => {
     await fetch(`/api/rules?id=${id}`, { method: "DELETE" });
     fetchRules();
+    toast.success("Rule deleted");
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Auto-categorization Rules</h1>
+      <PageHeader title="Auto-categorization Rules">
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" />
           Add Rule
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="border rounded-lg overflow-hidden">
         <Table>
@@ -158,10 +178,24 @@ export default function RulesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rules.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={`skel-${i}`}>
+                  <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                </TableRow>
+              ))
+            ) : rules.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  No rules created yet. Categorize a transaction to create your first rule.
+                <TableCell colSpan={5} className="py-0">
+                  <EmptyState
+                    icon={<Settings2 />}
+                    title="No rules yet"
+                    description="Categorize a transaction to create your first auto-categorization rule."
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -194,7 +228,7 @@ export default function RulesPage() {
                         size="icon"
                         variant="ghost"
                         className="text-destructive"
-                        onClick={() => handleDelete(rule.id)}
+                        onClick={() => setDeleteConfirm({ open: true, id: rule.id })}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -207,6 +241,15 @@ export default function RulesPage() {
         </Table>
       </div>
 
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ open, id: open ? deleteConfirm.id : null })}
+        title="Delete rule?"
+        description="This rule will stop applying to future transactions. Existing categorizations won't be affected."
+        confirmLabel="Delete"
+        onConfirm={() => deleteConfirm.id !== null && handleDelete(deleteConfirm.id)}
+      />
+
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -217,17 +260,22 @@ export default function RulesPage() {
           <div className="space-y-4">
             <div>
               <Label>Match Field</Label>
-              <select
-                className="w-full h-9 px-3 border rounded-md text-sm bg-background mt-1"
+              <Select
                 value={form.matchField}
-                onChange={(e) => {
-                  setForm((f) => ({ ...f, matchField: e.target.value }));
-                  fetchMatchCount(e.target.value, form.matchValue);
+                onValueChange={(val) => {
+                  const value = val ?? form.matchField;
+                  setForm((f) => ({ ...f, matchField: value }));
+                  fetchMatchCount(value, form.matchValue);
                 }}
               >
-                <option value="creditor_name">Creditor Name (expenses)</option>
-                <option value="debtor_name">Debtor Name (income)</option>
-              </select>
+                <SelectTrigger className="w-full mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="creditor_name">Creditor Name (expenses)</SelectItem>
+                  <SelectItem value="debtor_name">Debtor Name (income)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -250,29 +298,32 @@ export default function RulesPage() {
 
             <div>
               <Label>Category</Label>
-              <select
-                className="w-full h-9 px-3 border rounded-md text-sm bg-background mt-1"
+              <Select
                 value={form.categoryId}
-                onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
+                onValueChange={(val) => setForm((f) => ({ ...f, categoryId: val ?? f.categoryId }))}
               >
-                <option value="">Select category...</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full mt-1">
+                  <SelectValue placeholder="Select category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      <CategoryDot color={c.color} size="sm" />
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {matchCount !== null && matchCount > 0 && (
               <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="retro"
                   checked={applyRetro}
-                  onChange={(e) => setApplyRetro(e.target.checked)}
+                  onCheckedChange={(v) => setApplyRetro(!!v)}
                 />
-                <label htmlFor="retro" className="text-sm">
+                <label htmlFor="retro" className="text-sm cursor-pointer">
                   Apply retroactively to {matchCount} matching transactions
                 </label>
               </div>
