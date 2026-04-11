@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Receipt, Settings2, Tag, Wallet, Sun, Moon } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
-import { Button } from "@/components/ui/button";
+import { LayoutDashboard, Receipt, Settings2, Tag, Wallet } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -20,8 +19,6 @@ interface SidebarProps {
 
 export function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
-  const { resolvedTheme, setTheme } = useTheme();
-  const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
 
   return (
     <aside className="w-60 border-r bg-sidebar min-h-screen p-4 flex flex-col gap-2">
@@ -53,19 +50,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       {/* Dark mode toggle */}
       <div className="border-t pt-3 mt-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-          onClick={toggleTheme}
-        >
-          {resolvedTheme === "dark" ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
-          {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
-        </Button>
+        <ThemeToggle variant="sidebar" />
       </div>
     </aside>
   );

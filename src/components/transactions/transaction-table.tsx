@@ -104,7 +104,7 @@ export function TransactionTable({
   return (
     <TooltipProvider delay={300}>
     <>
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border rounded-lg overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>

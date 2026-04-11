@@ -135,7 +135,7 @@ export function TransactionFilters({ filters, categories, onChange }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-3 pt-3 border-t">
+      <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t">
         <div className="flex items-center gap-2">
           <Switch
             checked={filters.uncategorizedOnly}

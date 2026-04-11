@@ -78,8 +78,8 @@ export function YearlySummary({ showInvestment }: YearlySummaryProps) {
     <div className="space-y-4">
       {/* Section header / collapse toggle */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 border-t border-border" />
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="hidden sm:block flex-1 border-t border-border" />
+        <div className="flex flex-wrap items-center justify-end gap-2 shrink-0 min-w-0">
           <span className="text-sm font-medium text-muted-foreground">Yearly Summary</span>
           {availableYears.length > 1 && (
             <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
@@ -102,7 +102,7 @@ export function YearlySummary({ showInvestment }: YearlySummaryProps) {
             {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
         </div>
-        <div className="flex-1 border-t border-border" />
+        <div className="hidden sm:block flex-1 border-t border-border" />
       </div>
 
       {open && (

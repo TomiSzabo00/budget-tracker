@@ -28,7 +28,7 @@ export function BulkActions({ selectedCount, categories, onBulkCategorize, onCle
   const [selectedCat, setSelectedCat] = useState<number | null>(null);
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+    <div className="flex flex-wrap items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
       <span className="text-sm font-medium">{selectedCount} selected</span>
       <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
         Assign Category
