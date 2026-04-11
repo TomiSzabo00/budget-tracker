@@ -5,10 +5,12 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=__APP_DIR__
-ExecStart=__APP_DIR__/node_modules/.bin/next start -p __PORT__
+ExecStart=__APP_DIR__/scripts/start-standalone.sh
 Restart=always
 RestartSec=5
 EnvironmentFile=__APP_DIR__/.env
+Environment=PORT=__PORT__
+Environment=HOSTNAME=0.0.0.0
 
 StandardOutput=journal
 StandardError=journal
